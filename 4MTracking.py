@@ -19,8 +19,7 @@ import bge
 
 cont = bge.logic.getCurrentController()
 obj = cont.owner
-motionAct=cont.actuators["Motion"]
-sens=cont.sensors["Always"]
+sens=cont.sensors["Actuator"]
 
 
 # Inputs: Data read in from IMU
@@ -42,16 +41,21 @@ def process_data(data):
 
 
 
-#ser = serial.Serial(9,115200,timeout=None)
-#ser.io=io.TextIOWrapper(io.BufferedReader(ser),newline='\r',line_buffering=True)
-f=open('D:/GitHub/4MTack/tackingdata.txt','r')
+ser = serial.Serial(9,115200,timeout=None)
+ser.io=io.TextIOWrapper(io.BufferedReader(ser,10),newline='\r',line_buffering=False)
+#f=open('D:/GitHub/4MTrack/trackingdata2.txt','r')
+i=0
 # main() function
 def serControl():
+
     try:
-        if sens.positive:
+        if i==0:
+            rotation=obj.worldOrientation.to_euler()
+            #print(rotation)
+            #print('here')
             # read each line from serial
-            #line = ser.io.readline()
-            line=f.readline()
+            line = ser.io.readline()
+            #line=f.readline()
             #check the length of the line (number of columns) should be fixed
             # split() returns a list of all words in a string, so here it
             # returns each value in line. float(val) turns each value into a
@@ -62,17 +66,29 @@ def serControl():
                 #Transform data through transformation matrices
                 #data=data-base_data
                 TransData=process_data(data)
-                currentRot=motionAct.dRot
+                #currentRot=motionAct.dRot
+                #print(currentRot)
                 #print(currentRot)
                 #calib=currentRot-TransData
                 #print(TransData)
                 #Update Blender Model
-                motionAct.dRot=[TransData[0],TransData[1],TransData[2]]
+                #print(TransData)
+                obj.applyRotation([TransData[0],TransData[1],TransData[2]],0)
+                #print('here2')
+                #cont.deactivate("Motion")
+                #print('here3')
+
+            else:
+                ser.close()
+                ser.close()
+
     except:
+        #f.close()
         # close
         ser.flush()
         ser.close()
         print('exit')
+
         #break
 
 
