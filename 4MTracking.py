@@ -19,7 +19,9 @@ import bge
 
 cont = bge.logic.getCurrentController()
 obj = cont.owner
-rotate=cont.actuators["Motion"]
+motionAct=cont.actuators["Motion"]
+sens=cont.sensors["Always"]
+
 
 # Inputs: Data read in from IMU
 #Outputs: Rotation matrices calculated from Yaw/Pitch/Roll Euler Angles
@@ -40,52 +42,44 @@ def process_data(data):
 
 
 
-ser = serial.Serial(9,115200,timeout=None)
-ser.io=io.TextIOWrapper(io.BufferedReader(ser,150),newline='\r',line_buffering=True)
-
-
+#ser = serial.Serial(9,115200,timeout=None)
+#ser.io=io.TextIOWrapper(io.BufferedReader(ser),newline='\r',line_buffering=True)
+f=open('D:/GitHub/4MTack/tackingdata.txt','r')
 # main() function
 def serControl():
-    firstCall=0
-  #f=open('D:/GitHub/4MTrack/trackingdata.txt','r')
-  #Dummy coordinates
-  #p0=matrix([[0],[0],[0]])
-  #px=matrix([[2.5],[0],[0]])
-  #py=matrix([[0],[1],[0]])
-  #pz=matrix([[0],[0],[1]])
-
-
-# open serial port
-  #ser = serial.Serial(9,115200,timeout=None)
-  #ser.io=io.TextIOWrapper(io.BufferedReader(ser,150),newline='\r',line_buffering=True)
-
-  #while  True:
     try:
-        # read each line of f
-        line = ser.io.readline()
-        #check the length of the line (should be fixed)
-        # split() returns a list of all words in a string, so here it
-        # returns each value in line. float(val) turns each value into a
-        # floating point
-        data = [float(val) for val in line.split()]
-        if len(data)==10:
-            if firstCall==0:
-                base_data=data
-                firstCall=1
-            else:
+        if sens.positive:
+            # read each line from serial
+            #line = ser.io.readline()
+            line=f.readline()
+            #check the length of the line (number of columns) should be fixed
+            # split() returns a list of all words in a string, so here it
+            # returns each value in line. float(val) turns each value into a
+            # floating point
+            data = [float(val) for val in line.split()]
+            #print(len(data))
+            if len(data)==10:
                 #Transform data through transformation matrices
-                data=data-base_data
+                #data=data-base_data
                 TransData=process_data(data)
+                currentRot=motionAct.dRot
+                #print(currentRot)
+                #calib=currentRot-TransData
                 #print(TransData)
                 #Update Blender Model
-                rotate.dRot=[TransData[0],TransData[1],TransData[2]]
-                cont.activate(rotate)
+                motionAct.dRot=[TransData[0],TransData[1],TransData[2]]
     except:
         # close
         ser.flush()
         ser.close()
-        print('exiting')
+        print('exit')
         #break
+
+
+
+def serQuit():
+    ser.flush()
+    ser.close()
 
   # close
   #f.flush()
