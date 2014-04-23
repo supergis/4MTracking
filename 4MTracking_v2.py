@@ -11,18 +11,10 @@
 
 from numpy import*
 import io
-import sys, serial
+import serial
 import math
 import time
-from bge import logic
-from bge import events
-
-
-
-#cont = bge.logic.getCurrentController()
-#obj = cont.owner
-#sens=cont.sensors["Actuator"]
-
+import bge
 
 # Inputs: Data read in from IMU
 #Outputs: Rotation matrices calculated from Yaw/Pitch/Roll Euler Angles
@@ -37,21 +29,36 @@ def process_data(data):
     return ROT
 
 
-
-ser = serial.Serial(9,115200,timeout=None)
-ser.io=io.TextIOWrapper(io.BufferedReader(ser,10),newline='\r',line_buffering=False)
-#f=open('D:/GitHub/4MTrack/trackingdata2.txt','r')
-i=0
-# main() function
-def serControl():
+def update_Data(ser,obj):
     try:
+        line = ser.readline()
+    except Exception as err:
+        return
+
+    line=line.strip('\r')
+    data=[float(val) for val in line.split()]
+
+    if len(data)==10:
+        TransData=process_data(data)
+        obj.applyRotation([TransData[0],TransData[1],TransData[2]],0)
 
 
 
-except:
-        #f.close()
-        # close
-        ser.flush()
-        ser.close()
-        print('exit')
+# main() function
+def serControl(cont):
+    cont = bge.logic.getCurrentController()
+    obj = cont.owner
+    try:
+        connect=obj['connect']
+    except KeyError:
+        serCon= serial.Serial('COM10',115200,timeout=0)
+        connect=serCon.io=obj['connect']=io.TextIOWrapper(io.BufferedReader(serCon,500),newline='\r',line_buffering=False)
+
+    update_Data(connect,obj)
+
+
+def serQuit():
+    print('here')
+    ser.flush()
+    ser.close()
 
